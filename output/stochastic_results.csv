@@ -1,0 +1,6 @@
+Metric,Value_MRub,Interpretation
+Here-and-Now (HN) Expected NPV,504.95,Ожидаемый NPV стохастической модели двухэтапного выбора
+Wait-and-See (WS) Expected NPV,512.43,Ожидаемый доход при идеальном предвидении макросценария
+Expected Value Problem Recourse (EEV),487.28,Доход при использовании наивного детерминированного плана
+EVPI (Expected Value of Perfect Info),7.48,Предельная стоимость приобретения точного прогноза рынка (WS - HN)
+VSS (Value of Stochastic Solution),17.67,Выигрыш от стохастической оптимизации по сравнению с наивной (HN - EEV)

@@ -1,0 +1,29 @@
+==============================================================================
+  HiGHS MILP SOLVER LOG | Formulation: STRONG
+==============================================================================
+Status code      : 0
+Solver message   : Optimization terminated successfully. (HiGHS Status 7: Optimal)
+Success flag     : True
+Solve time       : 15.126 ms (0.015126 s)
+Objective (NPV)  : 1000.5681 млн руб.
+MIP Node count   : 1
+MIP Dual bound   : 1000.5681
+MIP Branch Gap   : 0.0000%
+------------------------------------------------------------------------------
+Selected projects (9 of 15): P1, P2, P3, P4, P8, P10, P11, P13, P15
+Active clusters   (2 of 3): K1, K2
+Active scaling vars: 8 variables
+==============================================================================
+
+==============================================================================
+  HiGHS LP RELAXATION LOG | Method: highs-ds | Presolve: True
+==============================================================================
+Status code      : 0
+Solver message   : Optimization terminated successfully. (HiGHS Status 7: Optimal)
+Success flag     : True
+Simplex iters    : 30
+Solve time       : 1.359 ms (0.001359 s)
+Objective (NPV)  : 1018.8410 млн руб.
+Budget shadow pr : -1.3964 руб/руб
+Labor shadow pr  : -0.0000 руб/чел-мес
+==============================================================================

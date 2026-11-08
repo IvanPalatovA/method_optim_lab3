@@ -1,0 +1,4 @@
+Scenario,Name,Budget_Limit_MRub,Labor_Limit_ManMonths,Cost_Multiplier,MILP_NPV_MRub,LP_NPV_MRub,Integrality_Gap_Pct,Selected_Count,Selected_Projects,Active_Clusters_Count,Active_Clusters,Used_Capital_MRub,Capital_Utilization_Pct,Used_Labor_ManMonths,Labor_Utilization_Pct,MILP_Time_ms,MIP_Nodes,Budget_Shadow_Price,Labor_Shadow_Price
+Base,Базовый сценарий (Плановый бюджет),613.0,337.0,1.0,1000.57,1018.84,1.83,9,"P1, P2, P3, P4, P8, P10, P11, P13, P15",2,"K1, K2",613.0,100.0,311.84,92.5,8.7,1,-1.3964,-0.0
+Deficit,Дефицитный сценарий (Секвестр инвестиций -31%),423.0,253.0,1.0,723.08,745.59,3.11,7,"P1, P2, P3, P4, P7, P10, P13",2,"K1, K3",423.0,100.0,233.39,92.2,9.48,1,-1.4782,-0.0
+Stress,"Стрессовый сценарий (Кризис: бюджет -49%, инфляция затрат +20%)",312.0,197.0,1.2,469.53,469.99,0.1,5,"P1, P2, P3, P10, P13",1,K1,312.0,100.0,148.65,75.5,3.76,1,-1.4909,-0.0

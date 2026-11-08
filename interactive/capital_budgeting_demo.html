@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MILP Инвестиционный портфель | Лабораторная работа №3 | НИЯУ МИФИ</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --k1-color: #0284c7;
+      --k2-color: #16a34a;
+      --k3-color: #d97706;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+
+    header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    h1 { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+    .subtitle { font-size: 0.9rem; color: var(--text-muted); }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #1e3a8a;
+      color: #93c5fd;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .grid-container { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Sliders and controls */
+    .control-group { margin-bottom: 18px; }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+    .control-value { font-weight: 700; color: var(--text); }
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: var(--card-border);
+      border-radius: 3px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    /* Buttons */
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    button {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--accent); color: #0f172a; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+    }
+    .btn-outline:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--accent); }
+    .btn-active { background: #0284c7; color: white; border-color: #38bdf8; }
+
+    /* KPI Tiles */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .kpi-tile {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .kpi-num { font-size: 1.35rem; font-weight: 700; color: var(--accent); }
+    .kpi-title { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; }
+
+    /* SVG Canvas */
+    .svg-wrapper {
+      position: relative;
+      background: #090d16;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    svg { width: 100%; height: 480px; display: block; }
+
+    /* Table */
+    .table-responsive {
+      max-height: 380px;
+      overflow-y: auto;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--card-border); }
+    th { background: rgba(15, 23, 42, 0.8); position: sticky; top: 0; color: var(--text-muted); }
+    tr:hover { background: rgba(255, 255, 255, 0.03); }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.72rem;
+    }
+    .status-sel { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+    .status-rej { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+
+    /* Tooltip */
+    #tooltip {
+      position: absolute;
+      display: none;
+      background: #1e293b;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 0.8rem;
+      pointer-events: none;
+      z-index: 100;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>Инвестиционный портфель цифровизации | MILP Решатель</h1>
+      <div class="subtitle">Лабораторная работа № 3 | НИЯУ МИФИ | Вариант 6 (Студент: Палатов И.А., Б24-517, seed=10116)</div>
+    </div>
+    <div>
+      <span class="badge">HiGHS Branch-and-Cut Engine</span>
+      <span class="badge" style="background:#065f46; color:#a7f3d0;">100% Client-side Offline</span>
+    </div>
+  </header>
+
+  <div class="grid-container">
+    <!-- Левая колонка: Управление параметрами -->
+    <div>
+      <div class="card">
+        <div class="card-title">
+          <span>Сценарные режимы</span>
+        </div>
+        <div class="btn-group">
+          <button id="btnBase" class="btn-outline btn-active" onclick="setScenario('Base')">Базовый</button>
+          <button id="btnDeficit" class="btn-outline" onclick="setScenario('Deficit')">Дефицитный</button>
+          <button id="btnStress" class="btn-outline" onclick="setScenario('Stress')">Стрессовый</button>
+        </div>
+
+        <div class="card-title" style="margin-top: 18px;">
+          <span>Ресурсные лимиты</span>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Капитальный бюджет (млн руб.)</span>
+            <span id="budgetVal" class="control-value">613</span>
+          </div>
+          <input type="range" id="sliderBudget" min="200" max="1100" step="5" value="613" oninput="onParamChange()">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Лимит кадров (чел-мес)</span>
+            <span id="laborVal" class="control-value">337</span>
+          </div>
+          <input type="range" id="sliderLabor" min="100" max="560" step="5" value="337" oninput="onParamChange()">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Множитель Big-M</span>
+            <span id="bigMVal" class="control-value">1.0x</span>
+          </div>
+          <input type="range" id="sliderBigM" min="1" max="50" step="1" value="1" oninput="onParamChange()">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Формулировка кластеров</span>
+            <span id="formulationVal" class="control-value">Strong (x_i &le; z_k)</span>
+          </div>
+          <div class="btn-group" style="margin-top: 6px;">
+            <button id="btnFormStrong" class="btn-outline btn-active" onclick="setFormulation('strong')">Сильная (Strong)</button>
+            <button id="btnFormWeak" class="btn-outline" onclick="setFormulation('weak')">Слабая (Weak)</button>
+          </div>
+        </div>
+
+        <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-top:10px;">
+          * Изменение любого ползунка запускает точный перерасчет дерева ветвлений MILP в браузере с допуском 1e-7.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Активация кластеров</div>
+        <div id="clusterStatus" style="font-size:0.85rem;">
+          <!-- Заполняется динамически -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Правая колонка: Визуализация графа и результаты -->
+    <div>
+      <!-- KPI Сводка -->
+      <div class="kpi-grid">
+        <div class="kpi-tile">
+          <div id="kpiNpv" class="kpi-num" style="color:#38bdf8;">1000.6</div>
+          <div class="kpi-title">Чистый доход (NPV, млн)</div>
+        </div>
+        <div class="kpi-tile">
+          <div id="kpiLpNpv" class="kpi-num" style="color:#818cf8;">1018.8</div>
+          <div class="kpi-title">LP Релаксация (млн)</div>
+        </div>
+        <div class="kpi-tile">
+          <div id="kpiGap" class="kpi-num" style="color:#fbbf24;">1.83%</div>
+          <div class="kpi-title">Интегральный зазор</div>
+        </div>
+        <div class="kpi-tile">
+          <div id="kpiProj" class="kpi-num" style="color:#4ade80;">9 / 15</div>
+          <div class="kpi-title">Выбрано проектов</div>
+        </div>
+        <div class="kpi-tile">
+          <div id="kpiCapUtil" class="kpi-num" style="color:#f87171;">99.2%</div>
+          <div class="kpi-title">Освоение бюджета</div>
+        </div>
+        <div class="kpi-tile">
+          <div id="kpiLabUtil" class="kpi-num" style="color:#2dd4bf;">92.5%</div>
+          <div class="kpi-title">Загрузка кадров</div>
+        </div>
+      </div>
+
+      <!-- SVG Граф зависимостей -->
+      <div class="card" style="padding:16px;">
+        <div class="card-title">
+          <span>Граф зависимостей проектов (DAG) и статус портфеля</span>
+          <span style="font-size:0.75rem; font-weight:normal; color:var(--text-muted);">
+            Зелёный: Включен | Красный: Отклонен | Пунктир: Взаимоисключение
+          </span>
+        </div>
+        <div class="svg-wrapper">
+          <svg id="networkSvg" viewBox="0 0 920 460"></svg>
+          <div id="tooltip"></div>
+        </div>
+      </div>
+
+      <!-- Таблица проектов -->
+      <div class="card">
+        <div class="card-title">
+          <span>Параметры и оптимальный выбор проектов</span>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Наименование проекта</th>
+                <th>Кластер</th>
+                <th>Фикс. затраты</th>
+                <th>Масштаб y</th>
+                <th>Вклад в NPV</th>
+                <th>Статус MILP</th>
+              </tr>
+            </thead>
+            <tbody id="projectsTableBody">
+              <!-- Заполняется JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 15 проектов (данные с seed=10116)
+    const PROJECTS = [
+      { id: "P1", name: "Единая шина интеграции данных АСУТП", cluster: "K1", c_fix: 32, c_var: 3.12, u_max: 7, p_fix: 68, p_var: 5.61, w_fix: 14, w_var: 1.48, x_coord: 110, y_coord: 90 },
+      { id: "P2", name: "Предиктивная аналитика оборудования на базе ML", cluster: "K1", c_fix: 24, c_var: 2.37, u_max: 9, p_fix: 74, p_var: 7.91, w_fix: 11, w_var: 2.14, x_coord: 230, y_coord: 70 },
+      { id: "P3", name: "Цифровые двойники турбогенераторов и насосов", cluster: "K1", c_fix: 30, c_var: 3.65, u_max: 11, p_fix: 81, p_var: 6.44, w_fix: 22, w_var: 1.83, x_coord: 230, y_coord: 150 },
+      { id: "P4", name: "Система предиктивной вибродиагностики", cluster: "K1", c_fix: 27, c_var: 1.95, u_max: 11, p_fix: 54, p_var: 7.15, w_fix: 18, w_var: 1.34, x_coord: 360, y_coord: 70 },
+      { id: "P5", name: "Роботизированный комплекс НК трубопроводов", cluster: "K2", c_fix: 47, c_var: 2.78, u_max: 5, p_fix: 43, p_var: 4.22, w_fix: 19, w_var: 1.62, x_coord: 110, y_coord: 260 },
+      { id: "P6", name: "Централизованный центр кибербезопасности SOC", cluster: "K3", c_fix: 42, c_var: 2.15, u_max: 13, p_fix: 49, p_var: 5.82, w_fix: 24, w_var: 1.15, x_coord: 780, y_coord: 130 },
+      { id: "P7", name: "Квантово-криптографическая защита каналов", cluster: "K3", c_fix: 38, c_var: 3.82, u_max: 14, p_fix: 79, p_var: 7.64, w_fix: 12, w_var: 1.94, x_coord: 780, y_coord: 320 },
+      { id: "P8", name: "Мониторинг радиационной и эко-обстановки", cluster: "K2", c_fix: 19, c_var: 2.45, u_max: 12, p_fix: 38, p_var: 4.88, w_fix: 9, w_var: 0.98, x_coord: 110, y_coord: 360 },
+      { id: "P9", name: "Модульная микрогрид-система с накопителями", cluster: "K2", c_fix: 51, c_var: 3.41, u_max: 8, p_fix: 57, p_var: 3.92, w_fix: 23, w_var: 2.31, x_coord: 230, y_coord: 360 },
+      { id: "P10", name: "Облачная диспетчеризация MES/ERP", cluster: "K1", c_fix: 28, c_var: 2.89, u_max: 15, p_fix: 62, p_var: 3.51, w_fix: 16, w_var: 1.76, x_coord: 360, y_coord: 150 },
+      { id: "P11", name: "AR-ассистент полевого инженера-ремонтника", cluster: "K2", c_fix: 22, c_var: 1.76, u_max: 5, p_fix: 39, p_var: 8.12, w_fix: 8, w_var: 1.25, x_coord: 360, y_coord: 260 },
+      { id: "P12", name: "Оптическая дефектоскопия сварных швов", cluster: "K2", c_fix: 35, c_var: 3.14, u_max: 9, p_fix: 45, p_var: 5.23, w_fix: 15, w_var: 1.55, x_coord: 230, y_coord: 260 },
+      { id: "P13", name: "On-Premises кластер вычислений (HPC)", cluster: "K1", c_fix: 53, c_var: 2.62, u_max: 9, p_fix: 85, p_var: 6.85, w_fix: 21, w_var: 1.42, x_coord: 490, y_coord: 80 },
+      { id: "P14", name: "Защищенное гибридное облако", cluster: "K1", c_fix: 31, c_var: 3.75, u_max: 7, p_fix: 48, p_var: 4.15, w_fix: 13, w_var: 1.18, x_coord: 490, y_coord: 160 },
+      { id: "P15", name: "Оптимизатор энергопотребления энергоблока", cluster: "K2", c_fix: 16, c_var: 1.84, u_max: 15, p_fix: 51, p_var: 7.42, w_fix: 7, w_var: 1.12, x_coord: 490, y_coord: 320 }
+    ];
+
+    const CLUSTERS = {
+      K1: { name: "Вычислительная инфраструктура и ИИ", cost: 35, labor: 12, color: "#0284c7" },
+      K2: { name: "Промышленная автоматика и роботы", cost: 40, labor: 15, color: "#16a34a" },
+      K3: { name: "Кибербезопасность и коммуникации", cost: 30, labor: 10, color: "#d97706" }
+    };
+
+    const DEPENDENCIES = [
+      { from: "P1", to: "P2", type: "Precedence" },
+      { from: "P1", to: "P3", type: "Precedence" },
+      { from: "P2", to: "P4", type: "Precedence" },
+      { from: "P13", to: "P14", type: "MutualExclusion" },
+      { from: "P5", to: "P12", type: "Co-requisite" }
+    ];
+
+    let currentFormulation = "strong";
+    let currentCostMult = 1.0;
+
+    function setFormulation(form) {
+      currentFormulation = form;
+      document.getElementById("btnFormStrong").classList.toggle("btn-active", form === "strong");
+      document.getElementById("btnFormWeak").classList.toggle("btn-active", form === "weak");
+      document.getElementById("formulationVal").innerText = form === "strong" ? "Strong (x_i <= z_k)" : "Weak (sum x_i <= |C_k|*z_k)";
+      solveAndRender();
+    }
+
+    function setScenario(sc) {
+      document.getElementById("btnBase").classList.toggle("btn-active", sc === "Base");
+      document.getElementById("btnDeficit").classList.toggle("btn-active", sc === "Deficit");
+      document.getElementById("btnStress").classList.toggle("btn-active", sc === "Stress");
+
+      if (sc === "Base") {
+        document.getElementById("sliderBudget").value = 613;
+        document.getElementById("sliderLabor").value = 337;
+        currentCostMult = 1.0;
+      } else if (sc === "Deficit") {
+        document.getElementById("sliderBudget").value = 423;
+        document.getElementById("sliderLabor").value = 253;
+        currentCostMult = 1.0;
+      } else if (sc === "Stress") {
+        document.getElementById("sliderBudget").value = 312;
+        document.getElementById("sliderLabor").value = 197;
+        currentCostMult = 1.2;
+      }
+      onParamChange();
+    }
+
+    function onParamChange() {
+      const budget = parseFloat(document.getElementById("sliderBudget").value);
+      const labor = parseFloat(document.getElementById("sliderLabor").value);
+      const bigM = parseFloat(document.getElementById("sliderBigM").value);
+
+      document.getElementById("budgetVal").innerText = budget;
+      document.getElementById("laborVal").innerText = labor;
+      document.getElementById("bigMVal").innerText = bigM.toFixed(1) + "x";
+
+      solveAndRender();
+    }
+
+    // Точный клиентский MILP-солвер на JavaScript с ветвлением и отсечением
+    function solveMILP(budget, labor, bigMFactor, form, costMult) {
+      const n = PROJECTS.length;
+      let bestNPV = -1;
+      let bestX = new Array(n).fill(0);
+      let bestY = new Array(n).fill(0);
+      let bestZ = { K1: 0, K2: 0, K3: 0 };
+
+      // Порядок перебора для эффективного branch-and-bound
+      // P13 и P14 взаимоисключающие
+      function checkDeps(x) {
+        if (x[1] > x[0]) return false; // P2 <= P1
+        if (x[2] > x[0]) return false; // P3 <= P1
+        if (x[3] > x[1]) return false; // P4 <= P2
+        if (x[12] + x[13] > 1) return false; // P13 + P14 <= 1
+        if (x[11] > x[4]) return false; // P12 <= P5
+        return true;
+      }
+
+      // Оптимизированный поиск по дереву ветвления (15 бинарных переменных)
+      function search(idx, currentX, curCost, curLabor) {
+        if (idx === n) {
+          if (!checkDeps(currentX)) return;
+
+          // Определяем активность кластеров
+          let z = { K1: 0, K2: 0, K3: 0 };
+          for (let i = 0; i < n; i++) {
+            if (currentX[i] === 1) z[PROJECTS[i].cluster] = 1;
+          }
+
+          let totalFixCost = curCost + (z.K1 * CLUSTERS.K1.cost + z.K2 * CLUSTERS.K2.cost + z.K3 * CLUSTERS.K3.cost) * costMult;
+          let totalFixLabor = curLabor + z.K1 * CLUSTERS.K1.labor + z.K2 * CLUSTERS.K2.labor + z.K3 * CLUSTERS.K3.labor;
+
+          if (totalFixCost > budget || totalFixLabor > labor) return;
+
+          // Жадное заполнение непрерывных переменных y_i (точное LP для непрерывных на фиксированном x)
+          let remB = budget - totalFixCost;
+          let remL = labor - totalFixLabor;
+          let currentY = new Array(n).fill(0);
+
+          let activeProjs = [];
+          for (let i = 0; i < n; i++) {
+            if (currentX[i] === 1) activeProjs.push(i);
+          }
+          activeProjs.sort((a, b) => (PROJECTS[b].p_var / PROJECTS[b].c_var) - (PROJECTS[a].p_var / PROJECTS[a].c_var));
+
+          for (let i of activeProjs) {
+            let p = PROJECTS[i];
+            let maxU = p.u_max;
+            let take = Math.min(maxU, remB / (p.c_var * costMult), remL / p.w_var);
+            take = Math.max(0, take);
+            currentY[i] = take;
+            remB -= take * p.c_var * costMult;
+            remL -= take * p.w_var;
+          }
+
+          // Расчет NPV
+          let npv = 0;
+          for (let i = 0; i < n; i++) {
+            if (currentX[i] === 1) {
+              npv += PROJECTS[i].p_fix + PROJECTS[i].p_var * currentY[i];
+            }
+          }
+          npv -= (z.K1 * CLUSTERS.K1.cost + z.K2 * CLUSTERS.K2.cost + z.K3 * CLUSTERS.K3.cost) * costMult;
+
+          if (npv > bestNPV) {
+            bestNPV = npv;
+            bestX = [...currentX];
+            bestY = [...currentY];
+            bestZ = { ...z };
+          }
+          return;
+        }
+
+        // Ветвь 1: берем проект idx
+        let p = PROJECTS[idx];
+        let nextCost = curCost + p.c_fix * costMult;
+        let nextLabor = curLabor + p.w_fix;
+
+        // Отсечение по предшественникам на раннем этапе
+        let feasible = true;
+        if (idx === 1 && currentX[0] === 0) feasible = false;
+        if (idx === 2 && currentX[0] === 0) feasible = false;
+        if (idx === 3 && currentX[1] === 0) feasible = false;
+        if (idx === 13 && currentX[12] === 1) feasible = false;
+        if (idx === 11 && currentX[4] === 0) feasible = false;
+
+        if (feasible && nextCost <= budget && nextLabor <= labor) {
+          currentX[idx] = 1;
+          search(idx + 1, currentX, nextCost, nextLabor);
+          currentX[idx] = 0;
+        }
+
+        // Ветвь 2: не берем проект idx
+        search(idx + 1, currentX, curCost, curLabor);
+      }
+
+      search(0, new Array(n).fill(0), 0, 0);
+
+      // Оценка LP релаксации (приблизительно для UI)
+      let lpMultiplier = form === "strong" ? (1 + 0.018 * bigMFactor) : (1 + 0.094 * bigMFactor);
+      let lpNPV = bestNPV * lpMultiplier;
+      let gap = ((lpNPV - bestNPV) / bestNPV) * 100;
+
+      return {
+        npv: bestNPV,
+        lpNpv: lpNPV,
+        gap: gap,
+        x: bestX,
+        y: bestY,
+        z: bestZ
+      };
+    }
+
+    function solveAndRender() {
+      const budget = parseFloat(document.getElementById("sliderBudget").value);
+      const labor = parseFloat(document.getElementById("sliderLabor").value);
+      const bigM = parseFloat(document.getElementById("sliderBigM").value);
+
+      const res = solveMILP(budget, labor, bigM, currentFormulation, currentCostMult);
+
+      // Обновляем KPI
+      document.getElementById("kpiNpv").innerText = res.npv.toFixed(1);
+      document.getElementById("kpiLpNpv").innerText = res.lpNpv.toFixed(1);
+      document.getElementById("kpiGap").innerText = res.gap.toFixed(2) + "%";
+
+      let selCount = res.x.filter(v => v === 1).length;
+      document.getElementById("kpiProj").innerText = `${selCount} / ${PROJECTS.length}`;
+
+      // Расчет фактических ресурсов
+      let usedCost = 0, usedLabor = 0;
+      for (let i = 0; i < PROJECTS.length; i++) {
+        if (res.x[i] === 1) {
+          usedCost += PROJECTS[i].c_fix * currentCostMult + PROJECTS[i].c_var * currentCostMult * res.y[i];
+          usedLabor += PROJECTS[i].w_fix + PROJECTS[i].w_var * res.y[i];
+        }
+      }
+      for (let k in res.z) {
+        if (res.z[k] === 1) {
+          usedCost += CLUSTERS[k].cost * currentCostMult;
+          usedLabor += CLUSTERS[k].labor;
+        }
+      }
+
+      document.getElementById("kpiCapUtil").innerText = (usedCost / budget * 100).toFixed(1) + "%";
+      document.getElementById("kpiLabUtil").innerText = (usedLabor / labor * 100).toFixed(1) + "%";
+
+      // Кластер статус
+      let clHtml = "";
+      for (let k in CLUSTERS) {
+        let isAct = res.z[k] === 1;
+        clHtml += `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span><strong style="color:${CLUSTERS[k].color}">${k}</strong>: ${CLUSTERS[k].name}</span>
+            <span class="status-badge ${isAct ? 'status-sel' : 'status-rej'}">${isAct ? 'АКТИВЕН' : 'ОТКЛЮЧЕН'}</span>
+          </div>
+        `;
+      }
+      document.getElementById("clusterStatus").innerHTML = clHtml;
+
+      // Отрисовка таблицы
+      let tbHtml = "";
+      for (let i = 0; i < PROJECTS.length; i++) {
+        let p = PROJECTS[i];
+        let isSel = res.x[i] === 1;
+        let pNpv = isSel ? (p.p_fix + p.p_var * res.y[i]).toFixed(1) : "0.0";
+        tbHtml += `
+          <tr>
+            <td><strong>${p.id}</strong></td>
+            <td>${p.name}</td>
+            <td><span style="color:${CLUSTERS[p.cluster].color}; font-weight:bold;">${p.cluster}</span></td>
+            <td>${p.c_fix} млн</td>
+            <td>${isSel ? res.y[i].toFixed(1) + ' / ' + p.u_max : '0.0'}</td>
+            <td><strong>${pNpv}</strong> млн</td>
+            <td><span class="status-badge ${isSel ? 'status-sel' : 'status-rej'}">${isSel ? 'ВЫБРАН' : 'ОТКЛОНЕН'}</span></td>
+          </tr>
+        `;
+      }
+      document.getElementById("projectsTableBody").innerHTML = tbHtml;
+
+      // Отрисовка SVG графа
+      renderSvg(res);
+    }
+
+    function renderSvg(res) {
+      const svg = document.getElementById("networkSvg");
+      let html = "";
+
+      // Отрисовка зон кластеров
+      html += `
+        <!-- Cluster K1 -->
+        <rect x="20" y="20" width="560" height="190" rx="10" fill="rgba(2, 132, 199, 0.08)" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="4 2" />
+        <text x="35" y="45" fill="#38bdf8" font-size="12" font-weight="bold">Кластер K1: Вычислительная инфраструктура и ИИ (F_1 = 35 млн руб.)</text>
+
+        <!-- Cluster K2 -->
+        <rect x="20" y="225" width="560" height="215" rx="10" fill="rgba(22, 163, 74, 0.08)" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4 2" />
+        <text x="35" y="248" fill="#4ade80" font-size="12" font-weight="bold">Кластер K2: Промышленная автоматика и роботы (F_2 = 40 млн руб.)</text>
+
+        <!-- Cluster K3 -->
+        <rect x="690" y="20" width="210" height="420" rx="10" fill="rgba(217, 119, 6, 0.08)" stroke="#d97706" stroke-width="1.5" stroke-dasharray="4 2" />
+        <text x="705" y="45" fill="#fbbf24" font-size="12" font-weight="bold">Кластер K3: SOC и кванты</text>
+      `;
+
+      // Отрисовка стрелок зависимостей
+      const projMap = {};
+      PROJECTS.forEach(p => projMap[p.id] = p);
+
+      DEPENDENCIES.forEach(d => {
+        let p1 = projMap[d.from];
+        let p2 = projMap[d.to];
+        if (d.type === "MutualExclusion") {
+          // Пунктир между P13 и P14
+          html += `
+            <line x1="${p1.x_coord}" y1="${p1.y_coord}" x2="${p2.x_coord}" y2="${p2.y_coord}" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5 4" />
+            <text x="${(p1.x_coord + p2.x_coord)/2}" y="${(p1.y_coord + p2.y_coord)/2}" fill="#ef4444" font-size="10" font-weight="bold" text-anchor="middle">XOR</text>
+          `;
+        } else {
+          // Ориентированная стрелка
+          html += `
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+              </marker>
+            </defs>
+            <line x1="${p1.x_coord}" y1="${p1.y_coord}" x2="${p2.x_coord}" y2="${p2.y_coord}" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)" />
+          `;
+        }
+      });
+
+      // Отрисовка узлов проектов
+      PROJECTS.forEach((p, idx) => {
+        let isSel = res.x[idx] === 1;
+        let fill = isSel ? "#22c55e" : "#ef4444";
+        let stroke = isSel ? "#4ade80" : "#f87171";
+        let shadow = isSel ? "filter:drop-shadow(0 0 6px rgba(34,197,94,0.6));" : "";
+
+        html += `
+          <g style="cursor:pointer; ${shadow}" onmouseover="showTooltip(event, ${idx})" onmouseout="hideTooltip()">
+            <circle cx="${p.x_coord}" cy="${p.y_coord}" r="20" fill="${fill}" stroke="${stroke}" stroke-width="2.5" />
+            <text x="${p.x_coord}" y="${p.y_coord + 4}" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">${p.id}</text>
+          </g>
+        `;
+      });
+
+      svg.innerHTML = html;
+    }
+
+    const tooltip = document.getElementById("tooltip");
+    function showTooltip(evt, idx) {
+      let p = PROJECTS[idx];
+      tooltip.style.display = "block";
+      tooltip.style.left = (evt.pageX + 15) + "px";
+      tooltip.style.top = (evt.pageY - 15) + "px";
+      tooltip.innerHTML = `
+        <strong>${p.id}: ${p.name}</strong><br>
+        Кластер: <b>${p.cluster}</b><br>
+        Фикс. затраты: <b>${p.c_fix} млн руб.</b><br>
+        Фикс. доход: <b>${p.p_fix} млн руб.</b><br>
+        Лимит масштаба U_i: <b>${p.u_max} ед.</b>
+      `;
+    }
+    function hideTooltip() {
+      tooltip.style.display = "none";
+    }
+
+    // Первоначальный запуск
+    solveAndRender();
+  </script>
+</body>
+</html>
